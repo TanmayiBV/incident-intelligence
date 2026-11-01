@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Build outputs
+dist/
+dist-ssr/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.local
+
+# Vercel
+.vercel/
+
+# Editor directories
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+Desktop.ini
+
+# Large media (uploaded via GitHub Releases)
+*.mp4
+*.avi
+*.mov
+*.mkv
