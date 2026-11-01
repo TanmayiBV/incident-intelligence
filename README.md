@@ -5,7 +5,7 @@
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-pygenic--arc.vercel.app-0070f3?style=for-the-badge)](https://pygenic-arc.vercel.app)
 [![Backend API](https://img.shields.io/badge/📡_API_Docs-Swagger_UI-85ea2d?style=for-the-badge)](https://pygenic-arc.vercel.app/api/docs)
 
-> Built for **Anvation 2026** Hackathon · Problem **AI-03** · Team **ZENITH**
+> Built for **Anvation 2026** Hackathon · Problem **AI-03** · Team **ZENITH** · 🥉 2nd Runner-Up
 
 ---
 
@@ -435,13 +435,13 @@ Both scenarios include noise events (chronic SMS/push notification failures), mi
 
 ## 📄 License
 
-This project was built for the **Anvation 2026** hackathon (Problem AI-03).
+This project was built for the **Anvation 2026** hackathon (Problem AI-03) and secured the **2nd Runner-Up** position.
 
 ---
 
 <div align="center">
 
-**Built by Team ZENITH** · Anvation 2026 · AI-03
+**Built by Team ZENITH** · 🥉 2nd Runner-Up · Anvation 2026 · AI-03
 
 [Live Demo](https://pygenic-arc.vercel.app) · [API Docs](https://pygenic-arc.vercel.app/api/docs) · [Demo Video](https://github.com/TanmayiBV/incident-intelligence/releases/tag/v1.0.0)
 
