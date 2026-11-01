@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script>window.FORCE_SCREEN=1;</script>
+<title>Pygenic Arc · INC-1042 · Interactive Incident Reconstruction</title>
+<style>
+  :root{
+    --page:#070b14; --surf:#0d1424; --surf2:#111a2e; --line:#1e293b; --line2:#2b3a55;
+    --txt:#e6edf7; --txt2:#93a4c0; --txt3:#5f7a9c;
+    --brand:#3b82f6; --brand2:#60a5fa; --amber:#f59e0b; --red:#ef4444; --green:#10b981; --purple:#8b5cf6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--page);color:#e6edf7;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  body{padding:0 0 40px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+  /* ---------- header ---------- */
+  header{position:sticky;top:0;z-index:50;background:rgba(9,13,23,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+  .hbar{display:flex;align-items:center;gap:18px;padding:12px 0}
+  .brand{font-size:15px;font-weight:700;letter-spacing:.14em}
+  .brand span{display:block;font-size:9px;font-weight:500;letter-spacing:.22em;color:#5f7a9c}
+  .incid{font-size:12px;color:#93a4c0;border-left:1px solid var(--line);padding-left:18px}
+  .incid b{color:#e6edf7;font-weight:600}
+  .hbar .spacer{flex:1}
+  .statechip{font-size:10px;letter-spacing:.14em;font-weight:700;padding:4px 10px;border-radius:4px;border:1px solid var(--line2);color:#93a4c0}
+  .statechip.on{color:#60a5fa;border-color:#1d4ed8;background:rgba(59,130,246,.12)}
+  .statechip.done{color:#10b981;border-color:#0f766e;background:rgba(16,185,129,.1)}
+  .btn{background:linear-gradient(180deg,#2563eb,#1d4ed8);color:#fff;border:0;border-radius:6px;padding:9px 16px;font-size:12px;font-weight:700;letter-spacing:.06em;cursor:pointer}
+  .btn:hover{filter:brightness(1.12)}
+  .btn.ghost{background:transparent;border:1px solid var(--line2);color:#93a4c0;font-weight:600}
+  select{background:var(--surf2);color:#e6edf7;border:1px solid var(--line2);border-radius:5px;padding:6px 8px;font-size:11px}
+  .lbl{font-size:10px;letter-spacing:.12em;color:#5f7a9c;text-transform:uppercase}
+
+  /* ---------- tabs ---------- */
+  nav.tabs{display:flex;gap:8px;padding:14px 0 0;flex-wrap:wrap}
+  .tab{background:var(--surf);border:1px solid var(--line);color:#93a4c0;border-radius:6px;padding:8px 14px;font-size:11.5px;font-weight:600;cursor:pointer;letter-spacing:.03em}
+  .tab:hover{border-color:var(--line2);color:#e6edf7}
+  .tab.active{background:rgba(59,130,246,.14);border-color:#1d4ed8;color:#93c5fd}
+  .tab .n{opacity:.55;margin-right:6px}
+
+  /* ---------- screens ---------- */
+  main{padding-top:16px}
+  .screen{display:none;animation:fade .35s ease}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .shead{display:flex;align-items:baseline;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+  .shead h2{font-size:17px;font-weight:700;letter-spacing:.02em}
+  .shead p{font-size:12px;color:#93a4c0;max-width:760px}
+  .badge{font-size:9.5px;font-weight:700;letter-spacing:.14em;padding:3px 8px;border-radius:3px;text-transform:uppercase}
+  .b-blue{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid #1d4ed8}
+  .b-red{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid #b91c1c}
+  .b-amber{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid #b45309}
+  .b-green{background:rgba(16,185,129,.14);color:#6ee7b7;border:1px solid #0f766e}
+  .b-gray{background:rgba(148,163,184,.12);color:#cbd5e1;border:1px solid var(--line2)}
+
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .pill{font-size:11px;color:#93a4c0;background:var(--surf);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+  .pill b{color:#e6edf7}
+  .pill.warn{border-color:#b45309;color:#fcd34d}
+
+  .card{background:var(--surf);border:1px solid var(--line);border-radius:9px;padding:14px}
+  .card h3{font-size:10.5px;letter-spacing:.16em;color:#5f7a9c;font-weight:700;margin-bottom:10px}
+  .grid5{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .grid5 .card:nth-child(4){grid-column:1/2}
+  .row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:12px;border-bottom:1px dashed rgba(30,41,59,.7)}
+  .row:last-child{border-bottom:0}
+  .row .t{color:#5f7a9c;font-size:10.5px;font-variant-numeric:tabular-nums;min-width:62px}
+  .row .k{flex:1;color:#cbd5e1}
+  .row .v{font-variant-numeric:tabular-nums;color:#93a4c0;font-size:11px}
+  .row.loud{background:rgba(239,68,68,.11);border:1px solid rgba(239,68,68,.45);border-radius:6px;padding:7px 8px;margin:4px 0}
+  .row.loud .k,.row.loud .v{color:#fca5a5;font-weight:600}
+  .row.dim{opacity:.6}
+  .mini{height:5px;border-radius:3px;background:#1e293b;overflow:hidden;min-width:52px}
+  .mini i{display:block;height:100%;background:linear-gradient(90deg,#1d4ed8,#60a5fa)}
+  .mini i.hot{background:linear-gradient(90deg,#b91c1c,#f87171)}
+  .mini i.warm{background:linear-gradient(90deg,#b45309,#fbbf24)}
+
+  /* ---------- pipeline ---------- */
+  .rail{display:flex;gap:0;align-items:stretch;margin:6px 0 16px;flex-wrap:wrap}
+  .stage{flex:1;min-width:150px;background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:11px 12px;margin-right:8px;position:relative;transition:.3s}
+  .stage:last-child{margin-right:0}
+  .stage .num{font-size:10px;color:#5f7a9c;letter-spacing:.14em;font-weight:700}
+  .stage .nm{font-size:12.5px;font-weight:600;margin-top:3px;color:#93a4c0}
+  .stage .st{font-size:10px;margin-top:5px;color:#5f7a9c;letter-spacing:.08em;text-transform:uppercase}
+  .stage.run{border-color:#1d4ed8;background:rgba(59,130,246,.1);box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+  .stage.run .nm{color:#93c5fd}
+  .stage.run .st{color:#60a5fa}
+  .stage.ok{border-color:#0f766e;background:rgba(16,185,129,.07)}
+  .stage.ok .nm,.stage.ok .st{color:#6ee7b7}
+
+  .counts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .cbox{background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:120px}
+  .cbox .cl{font-size:9.5px;letter-spacing:.14em;color:#5f7a9c;text-transform:uppercase}
+  .cbox .cv{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;color:#e6edf7}
+  .cbox.hit .cv{color:#60a5fa}
+  .arrowto{color:#334f78;font-size:16px}
+
+  .split{display:grid;grid-template-columns:1.05fr 1fr;gap:12px;align-items:start}
+  .gwrap{background:var(--surf);border:1px solid var(--line);border-radius:9px;padding:12px}
+  .tracebox{background:#080d18;border:1px solid var(--line);border-radius:9px;padding:0;overflow:hidden}
+  .tracebox h3{padding:11px 14px 0;font-size:10.5px;letter-spacing:.16em;color:#5f7a9c;font-weight:700}
+  .traces{font:11.5px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:10px 14px 14px;max-height:268px;overflow:auto}
+  .traces div{opacity:0;animation:tin .3s forwards}
+  @keyframes tin{to{opacity:1}}
+  .traces .tt{color:#5f7a9c;margin-right:9px}
+  .traces .tg{color:#93c5fd;font-weight:600;min-width:74px;display:inline-block}
+  .traces .tm{color:#cbd5e1}
+  .traces .bad{color:#fca5a5}
+
+  /* ---------- hypotheses ---------- */
+  .hyp{background:var(--surf);border:1px solid var(--line);border-radius:9px;padding:13px 15px;margin-bottom:11px;transition:.35s}
+  .hyp.win{border-color:#0f766e;background:rgba(16,185,129,.07)}
+  .hyp.lose{border-color:#7f1d1d;background:rgba(239,68,68,.06)}
+  .hyp .hrow{display:flex;align-items:center;gap:12px}
+  .hyp .hn{font-size:11px;font-weight:700;color:#93a4c0;min-width:26px}
+  .hyp .ht{font-size:14px;font-weight:600;flex:1}
+  .hyp .hs{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;min-width:62px;text-align:right}
+  .bar{height:7px;border-radius:4px;background:#16203100;background:#162031;margin:10px 0 9px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:4px;transition:width 1.1s cubic-bezier(.3,.9,.3,1)}
+  .bar i.b1{background:linear-gradient(90deg,#0f766e,#34d399)}
+  .bar i.b2{background:linear-gradient(90deg,#7f1d1d,#f87171)}
+  .bar i.b3{background:linear-gradient(90deg,#334f78,#94a3b8)}
+  .why{font-size:11.5px;color:#93a4c0;display:flex;flex-direction:column;gap:3px}
+  .why span.ok::before{content:"✓ ";color:#34d399;font-weight:700}
+  .why span.no::before{content:"✗ ";color:#f87171;font-weight:700}
+  .tag{font-size:9.5px;font-weight:700;letter-spacing:.12em;padding:3px 8px;border-radius:3px;text-transform:uppercase}
+
+  .rh{background:rgba(239,68,68,.08);border:1.5px solid #b91c1c;border-radius:10px;padding:15px 16px;margin-top:6px}
+  .rh h4{font-size:12.5px;letter-spacing:.1em;color:#fca5a5;font-weight:700;margin-bottom:10px}
+  .rh .line{font-size:12px;color:#cbd5e1;padding:3px 0}
+  .rh .line b{color:#fca5a5}
+  .deltaflow{display:flex;align-items:center;gap:10px;margin:12px 0 4px;font-size:11.5px;flex-wrap:wrap}
+  .deltaflow .pt{background:#080d18;border:1px solid var(--line2);border-radius:6px;padding:7px 10px;font-variant-numeric:tabular-nums}
+  .deltaflow .arr{color:#f87171;font-weight:700}
+  .deltaflow .pt.bad{border-color:#b91c1c;color:#fca5a5}
+  .deltaflow .pt.good{border-color:#0f766e;color:#6ee7b7}
+
+  /* ---------- RCA ---------- */
+  .rcatop{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;align-items:start}
+  .rootcard{background:linear-gradient(160deg,rgba(16,185,129,.14),rgba(13,20,36,.9));border:1.5px solid #0f766e;border-radius:11px;padding:18px}
+  .rootcard .cl{font-size:10px;letter-spacing:.2em;color:#6ee7b7;font-weight:700}
+  .rootcard .rt{font-size:24px;font-weight:700;margin:8px 0 4px;letter-spacing:-.01em}
+  .rootcard .conf{display:flex;align-items:baseline;gap:10px;margin-top:12px}
+  .rootcard .conf b{font-size:34px;font-weight:800;color:#6ee7b7;font-variant-numeric:tabular-nums;line-height:1}
+  .rootcard .conf span{font-size:10px;letter-spacing:.16em;color:#93a4c0}
+  .chain{display:flex;flex-direction:column;gap:0}
+  .lnk{display:flex;gap:12px;align-items:flex-start}
+  .lnk .dotcol{display:flex;flex-direction:column;align-items:center;width:14px}
+  .lnk .dot{width:11px;height:11px;border-radius:50%;border:2px solid #60a5fa;background:#0b1220;margin-top:5px;flex:0 0 auto}
+  .lnk.first .dot{border-color:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.16)}
+  .lnk .stem{width:2px;flex:1;background:linear-gradient(180deg,#1d4ed8,#1e293b);min-height:16px}
+  .lnk .body{padding-bottom:6px}
+  .lnk .lt{font-size:12.5px;color:#e6edf7;font-weight:600}
+  .lnk .ld{font-size:10.5px;color:#5f7a9c;font-variant-numeric:tabular-nums}
+  .lnk .gap{font-size:10px;color:#60a5fa;font-variant-numeric:tabular-nums;padding:2px 0 6px 22px}
+  .evlist{display:flex;flex-direction:column;gap:6px}
+  .ev{display:flex;gap:9px;align-items:baseline;background:#0a1120;border:1px solid var(--line);border-radius:7px;padding:8px 10px;cursor:pointer;font-size:11.5px;color:#cbd5e1;transition:.18s;text-align:left;width:100%}
+  .ev:hover{border-color:#1d4ed8;background:#0d1729}
+  .ev .id{font:10.5px/1 ui-monospace,Menlo,monospace;color:#60a5fa;min-width:150px}
+  .ev .tx{flex:1}
+  .ev.mis{border-color:rgba(185,28,28,.6);background:rgba(239,68,68,.07);color:#fca5a5}
+  .ev.mis .id{color:#fca5a5}
+  .cf{background:#0a1120;border-left:2px solid #60a5fa;border-radius:0 7px 7px 0;padding:11px 13px;font-size:12px;color:#cbd5e1;font-style:italic}
+  .act{background:linear-gradient(160deg,rgba(59,130,246,.14),rgba(13,20,36,.9));border:1px solid #1d4ed8;border-radius:9px;padding:14px 15px}
+  .act .h{font-size:10px;letter-spacing:.18em;color:#93c5fd;font-weight:700;margin-bottom:7px}
+  .act .a{font-size:15px;font-weight:700;color:#e6edf7}
+  .act .v{font-size:11.5px;color:#93a4c0;margin-top:6px}
+  .act .v b{color:#6ee7b7}
+
+  /* ---------- timeline ---------- */
+  .tlwrap{background:var(--surf);border:1px solid var(--line);border-radius:9px;padding:14px;margin-top:14px}
+  .tlwrap .th{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .tlwrap .th h3{font-size:10.5px;letter-spacing:.16em;color:#5f7a9c;font-weight:700}
+  .tlwrap .th span{font-size:10.5px;color:#5f7a9c}
+  .tl{position:relative;padding-left:6px}
+  .tl:before{content:"";position:absolute;left:79px;top:6px;bottom:6px;width:1px;background:var(--line2)}
+  .tli{display:flex;gap:14px;align-items:center;padding:6px 0;position:relative;opacity:0;animation:fade .4s forwards}
+  .tli .tt{font:11.5px/1 ui-monospace,Menlo,monospace;color:#5f7a9c;width:66px;text-align:right;font-variant-numeric:tabular-nums}
+  .tli .mk{width:9px;height:9px;border-radius:50%;background:#1d4ed8;border:2px solid #0b1220;z-index:1;margin-left:-4.5px;flex:0 0 auto}
+  .tli.change .mk{background:#f59e0b}
+  .tli.base .mk{background:#475569}
+  .tli.first .mk{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.2)}
+  .tli.rh .mk{background:#ef4444}
+  .tli .txt{font-size:12px;color:#cbd5e1}
+  .tli .txt b{color:#e6edf7;font-weight:600}
+  .tli .txt em{color:#5f7a9c;font-style:normal;font-size:11px}
+  .tli.rh .txt{color:#fca5a5}
+
+  /* ---------- evidence drawer ---------- */
+  .drawer{position:fixed;right:20px;bottom:20px;width:430px;max-width:calc(100vw - 40px);background:#0a1120;border:1px solid #1d4ed8;border-radius:10px;padding:14px 16px;box-shadow:0 18px 40px rgba(0,0,0,.6);display:none;z-index:80}
+  .drawer.on{display:block}
+  .drawer .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .drawer .dh b{font:12px/1 ui-monospace,Menlo,monospace;color:#60a5fa}
+  .drawer .dh button{background:none;border:0;color:#5f7a9c;font-size:16px;cursor:pointer;line-height:1}
+  .drawer .meta{font-size:11px;color:#93a4c0;margin-bottom:8px}
+  .drawer pre{font:11.5px/1.6 ui-monospace,Menlo,Consolas,monospace;color:#cbd5e1;background:#060a12;border:1px solid var(--line);border-radius:6px;padding:9px 11px;white-space:pre-wrap}
+
+  footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:11px;color:#5f7a9c}
+  .hint{font-size:11px;color:#5f7a9c;margin-top:10px}
+  @media(max-width:900px){.grid5,.split,.rcatop{grid-template-columns:1fr}.deltaflow{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hbar">
+    <div class="brand">PYGENIC ARC<span>INTERACTIVE INCIDENT RECONSTRUCTION</span></div>
+    <div class="incid"><b>INC-1042</b> · Checkout degradation · 8 Oct 2026</div>
+    <div class="spacer"></div>
+    <span class="lbl">Investigation</span>
+    <span class="statechip" id="invState">IDLE</span>
+    <select id="speed" title="Replay speed">
+      <option value="0.5">0.5×</option>
+      <option value="1" selected>1×</option>
+      <option value="2">2×</option>
+    </select>
+    <button class="btn" id="replay">▶ DEMO / REPLAY</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-go="1"><span class="n">01</span>Raw Evidence Flood</button>
+    <button class="tab" data-go="2"><span class="n">02</span>Investigation Pipeline</button>
+    <button class="tab" data-go="3"><span class="n">03</span>Hypothesis Arena</button>
+    <button class="tab" data-go="4"><span class="n">04</span>Final RCA</button>
+  </nav>
+</div>
+
+<main class="wrap">
+
+  <!-- ============ SCREEN 1 ============ -->
+  <section class="screen active" id="scr1" data-screen="1">
+    <div class="shead">
+      <h2>SCREEN 1 · Raw Evidence Flood</h2>
+      <span class="badge b-amber">noise present</span>
+      <p>Four heterogeneous evidence sources plus noise arrive together. The loudest signal is highlighted on purpose — it is not the cause.</p>
+    </div>
+
+    <div class="pills">
+      <span class="pill"><b>117</b> logs</span>
+      <span class="pill"><b>34</b> metric windows</span>
+      <span class="pill"><b>28</b> trace spans</span>
+      <span class="pill"><b>3</b> deploys</span>
+      <span class="pill warn"><b>4</b> noise items</span>
+      <span class="pill">window <b>10:00:50 → 10:02:00</b></span>
+    </div>
+
+    <div class="grid5">
+      <div class="card">
+        <h3>LOGS</h3>
+        <div class="row"><span class="t">10:00:50</span><span class="k">INFO marketing campaign served</span><span class="v">noise</span></div>
+        <div class="row"><span class="t">10:01:00</span><span class="k">INFO inventory cache refresh hit</span><span class="v">noise</span></div>
+        <div class="row"><span class="t">10:01:18</span><span class="k">ERROR checkout pool wait 1204ms</span><span class="v">error</span></div>
+        <div class="row"><span class="t">10:01:24</span><span class="k">WARN payment upstream timeout</span><span class="v">warn</span></div>
+        <div class="row"><span class="t">10:01:29</span><span class="k">WARN ordersdb pool utilisation 85%</span><span class="v">warn</span></div>
+        <div class="row dim"><span class="t">10:02:00</span><span class="k">INFO nightly cron finished ok</span><span class="v">noise</span></div>
+      </div>
+
+      <div class="card">
+        <h3>METRICS · anomaly magnitudes</h3>
+        <div class="row"><span class="t">10:01:17</span><span class="k">Checkout p95 latency</span><span class="mini"><i style="width:70%"></i></span><span class="v">210ms → 1.8s</span></div>
+        <div class="row"><span class="t">10:01:24</span><span class="k">Payment timeout rate</span><span class="mini"><i class="warm" style="width:62%"></i></span><span class="v">0.4% → 6.0%</span></div>
+        <div class="row"><span class="t">10:01:31</span><span class="k">Orders DB pool pressure</span><span class="mini"><i class="warm" style="width:74%"></i></span><span class="v">util 85%</span></div>
+        <div class="row"><span class="t">10:01:35</span><span class="k">Checkout HTTP 5xx rate</span><span class="mini"><i class="hot" style="width:80%"></i></span><span class="v">0.1% → 4.2%</span></div>
+        <div class="row loud"><span class="t">10:01:38</span><span class="k">Orders DB query timeouts</span><span class="mini"><i class="hot" style="width:100%"></i></span><span class="v">12 / s · 96%</span></div>
+      </div>
+
+      <div class="card">
+        <h3>TRACES · trace abc123</h3>
+        <div class="row"><span class="t">10:01:18</span><span class="k">checkout-api</span><span class="mini"><i style="width:88%"></i></span><span class="v">1800ms</span></div>
+        <div class="row"><span class="t">10:01:19</span><span class="k">payment-svc</span><span class="mini"><i class="warm" style="width:100%"></i></span><span class="v">3020ms</span></div>
+        <div class="row"><span class="t">10:01:20</span><span class="k">orders-db</span><span class="mini"><i style="width:44%"></i></span><span class="v">890ms</span></div>
+        <div class="hint">1 trace · 3 spans · crosses Checkout → Payment → Orders DB</div>
+      </div>
+
+      <div class="card">
+        <h3>DEPLOYMENTS / CHANGES</h3>
+        <div class="row"><span class="t">09:58:00</span><span class="k">risk-svc routine deploy</span><span class="v">out of window</span></div>
+        <div class="row"><span class="t">10:01:10</span><span class="k"><b style="color:#cbd5e1">D104</b> checkout v1.8.1 → v1.8.2</span><span class="v">quiet marker</span></div>
+        <div class="hint">D104 is real but visually understated — the system must find it, not the eyeball.</div>
+      </div>
+
+      <div class="card" style="grid-column:2 / 4">
+        <h3>NOISE · filtered by contextual relevance, never by a flag</h3>
+        <div class="row"><span class="t">09:58:00</span><span class="k">N-03 risk-svc routine deploy</span><span class="v">outside incident window</span></div>
+        <div class="row"><span class="t">10:00:50</span><span class="k">N-01 marketing INFO log</span><span class="v">unrelated service</span></div>
+        <div class="row"><span class="t">10:01:00</span><span class="k">N-02 inventory cache refresh hit</span><span class="v">expected periodic</span></div>
+        <div class="row"><span class="t">10:02:00</span><span class="k">N-04 nightly cron success</span><span class="v">after incident</span></div>
+      </div>
+    </div>
+
+    <div class="tlwrap">
+      <div class="th"><h3>INCIDENT TIMELINE · INC-1042</h3><span>7 rows · baseline + 5 anomalies + 1 red herring</span></div>
+      <div class="tl" id="tl1"></div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 2 ============ -->
+  <section class="screen" id="scr2" data-screen="2">
+    <div class="shead">
+      <h2>SCREEN 2 · Investigation Pipeline</h2>
+      <span class="badge b-blue" id="b2">not started</span>
+      <p>Every counter below ticks because the backend emits an ordered investigation event — no faked progress bar.</p>
+    </div>
+
+    <div class="rail" id="rail">
+      <div class="stage" data-st="0"><div class="num">01</div><div class="nm">INGEST</div><div class="st">pending</div></div>
+      <div class="stage" data-st="1"><div class="num">02</div><div class="nm">NORMALIZE</div><div class="st">pending</div></div>
+      <div class="stage" data-st="2"><div class="num">03</div><div class="nm">BASELINE</div><div class="st">pending</div></div>
+      <div class="stage" data-st="3"><div class="num">04</div><div class="nm">DETECT</div><div class="st">pending</div></div>
+      <div class="stage" data-st="4"><div class="num">05</div><div class="nm">MAP</div><div class="st">pending</div></div>
+    </div>
+
+    <div class="counts">
+      <div class="cbox" id="c1"><div class="cl">Raw events</div><div class="cv" id="v1">0</div></div>
+      <span class="arrowto">→</span>
+      <div class="cbox" id="c2"><div class="cl">Canonical</div><div class="cv" id="v2">0</div></div>
+      <span class="arrowto">→</span>
+      <div class="cbox" id="c3"><div class="cl">Anomalies</div><div class="cv" id="v3">0</div></div>
+      <span class="arrowto">→</span>
+      <div class="cbox" id="c4"><div class="cl">Candidate changes</div><div class="cv" id="v4">0</div></div>
+    </div>
+
+    <div class="split">
+      <div class="gwrap">
+        <h3 style="font-size:10.5px;letter-spacing:.16em;color:#5f7a9c;font-weight:700;margin-bottom:6px">SERVICE DEPENDENCY GRAPH</h3>
+        <svg viewBox="0 0 480 250" style="width:100%;height:auto">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#334f78" stroke-width="1.5"/>
+            </marker>
+            <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
+            </marker>
+          </defs>
+          <g id="edges" opacity="0">
+            <path d="M118 60 L218 60" stroke="#60a5fa" stroke-width="1.6" marker-end="url(#ar2)"/>
+            <text x="168" y="50" text-anchor="middle" font-size="9.5" fill="#5f7a9c">calls</text>
+            <path d="M282 78 L356 118" stroke="#334f78" stroke-width="1.6" marker-end="url(#ar)"/>
+            <text x="335" y="90" text-anchor="middle" font-size="9.5" fill="#5f7a9c">calls</text>
+            <path d="M118 90 L118 148 L330 148" stroke="#334f78" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+            <text x="196" y="164" text-anchor="middle" font-size="9.5" fill="#5f7a9c">async read</text>
+          </g>
+          <g id="nodes" opacity="0">
+            <rect x="20" y="42" width="98" height="36" rx="7" fill="rgba(245,158,11,.1)" stroke="#b45309" stroke-width="1.4"/>
+            <text x="69" y="58" text-anchor="middle" font-size="12" fill="#fcd34d" font-weight="600">Checkout</text>
+            <text x="69" y="70" text-anchor="middle" font-size="9" fill="#93a4c0">upstream · D104</text>
+
+            <rect x="220" y="42" width="98" height="36" rx="7" fill="rgba(59,130,246,.1)" stroke="#1d4ed8" stroke-width="1.2"/>
+            <text x="269" y="58" text-anchor="middle" font-size="12" fill="#93c5fd" font-weight="600">Payment</text>
+            <text x="269" y="70" text-anchor="middle" font-size="9" fill="#93a4c0">downstream</text>
+
+            <rect x="330" y="112" width="112" height="36" rx="7" fill="rgba(239,68,68,.1)" stroke="#b91c1c" stroke-width="1.4"/>
+            <text x="386" y="128" text-anchor="middle" font-size="12" fill="#fca5a5" font-weight="600">Orders DB</text>
+            <text x="386" y="140" text-anchor="middle" font-size="9" fill="#93a4c0">downstream · red herring</text>
+
+            <text x="20" y="205" font-size="10.5" fill="#5f7a9c">Propagation direction: Checkout → Payment → Orders DB</text>
+            <text x="20" y="222" font-size="10.5" fill="#5f7a9c">Any signal appearing late and downstream cannot be the initiator.</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="tracebox">
+        <h3>LIVE INVESTIGATION TRACE</h3>
+        <div class="traces" id="trace"><div style="opacity:1"><span class="tt">--:--:--</span><span class="tm" style="color:#5f7a9c">awaiting pipeline run… press ▶ DEMO / REPLAY</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 3 ============ -->
+  <section class="screen" id="scr3" data-screen="3">
+    <div class="shead">
+      <h2>SCREEN 3 · Hypothesis Arena</h2>
+      <span class="badge b-red">red herring present</span>
+      <p>Three candidate causes compete. The dramatic signal loses because time and topology contradict it.</p>
+    </div>
+
+    <div id="hyps">
+      <div class="hyp" id="h1">
+        <div class="hrow">
+          <span class="hn">H1</span>
+          <span class="ht">Deployment D104 <em style="font-style:normal;color:#5f7a9c;font-size:11px">(Checkout v1.8.2)</em></span>
+          <span class="tag b-green" id="t1" style="display:none">strongest</span>
+          <span class="hs" id="s1">0%</span>
+        </div>
+        <div class="bar"><i class="b1" id="p1"></i></div>
+        <div class="why">
+          <span class="ok">Temporal precedence — precedes first anomaly by 7 s (10:01:10 → 10:01:17)</span>
+          <span class="ok">Topology relevance — Checkout is upstream of every symptom</span>
+          <span class="ok">Propagation fit — symptom order matches Checkout → Payment → Orders DB</span>
+          <span class="ok">Symptom coverage — explains 5 / 5 observed symptoms</span>
+        </div>
+      </div>
+
+      <div class="hyp" id="h3">
+        <div class="hrow">
+          <span class="hn">H3</span>
+          <span class="ht">Traffic spike</span>
+          <span class="hs" id="s3">0%</span>
+        </div>
+        <div class="bar"><i class="b3" id="p3"></i></div>
+        <div class="why">
+          <span class="ok">Checkout latency deviation is real and large (+4.7 σ)</span>
+          <span class="no">No traffic surge recorded in any evidence source</span>
+          <span class="no">Does not explain Payment and Orders DB degradation</span>
+        </div>
+      </div>
+
+      <div class="hyp" id="h2">
+        <div class="hrow">
+          <span class="hn">H2</span>
+          <span class="ht">Orders DB saturation</span>
+          <span class="tag b-red" id="t2" style="display:none">rejected</span>
+          <span class="hs" id="s2">0%</span>
+        </div>
+        <div class="bar"><i class="b2" id="p2"></i></div>
+        <div class="why">
+          <span class="no">DB timeout fires 10:01:38 — 21 s AFTER incident onset at 10:01:17</span>
+          <span class="no">Downstream of Checkout in the dependency graph</span>
+          <span class="no">Cannot cause an anomaly that began before it</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rh">
+      <h4>⚠ RED HERRING DETECTED</h4>
+      <div class="line"><b>Signal:</b> Orders DB query timeouts — 12 / s at 10:01:38</div>
+      <div class="line"><b>DRAMA:</b> highest anomaly magnitude in the incident (96%)</div>
+      <div class="line"><b>TRUTH:</b> downstream of Checkout · fires after onset · explained by the chain</div>
+      <div class="line"><b>CLASSIFICATION:</b> DOWNSTREAM EFFECT · NOT ROOT CAUSE</div>
+      <div class="deltaflow">
+        <span class="pt good">Incident onset · Checkout p95 · 10:01:17</span>
+        <span class="arr">⟶ Δ +21 s ⟶</span>
+        <span class="pt bad">Orders DB timeout · 10:01:38</span>
+      </div>
+      <div class="hint" style="margin-top:9px">You cannot cause something that starts after you. This gap is the decisive evidence.</div>
+    </div>
+
+    <div class="tlwrap">
+      <div class="th"><h3>INCIDENT TIMELINE · RED HERRING MARKED</h3><span>7 rows · red herring marked</span></div>
+      <div class="tl" id="tl3"></div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 4 ============ -->
+  <section class="screen" id="scr4" data-screen="4">
+    <div class="shead">
+      <h2>SCREEN 4 · Final RCA</h2>
+      <span class="badge b-green">resolved</span>
+      <p>Every claim links to a named evidence ID. Click any evidence row to see the raw record behind it.</p>
+    </div>
+
+    <div class="rcatop">
+      <div class="rootcard">
+        <div class="cl">MOST PROBABLE ROOT CAUSE</div>
+        <div class="rt">Deployment D104 → Checkout</div>
+        <div style="font-size:12px;color:#93a4c0">Checkout service degradation, initiated by the v1.8.2 release at 10:01:10.</div>
+        <div class="conf"><b>87%</b><span>CONFIDENCE<br>EVIDENCE-WEIGHTED</span></div>
+      </div>
+
+      <div class="gwrap">
+        <h3 style="font-size:10.5px;letter-spacing:.16em;color:#5f7a9c;font-weight:700;margin-bottom:10px">RECOMMENDED NEXT ACTION</h3>
+        <div class="act">
+          <div class="h">ACTION</div>
+          <div class="a">Roll back Deployment D104.</div>
+          <div class="v">Verification signal: <b>Checkout p95 &lt; 350 ms within 90 s</b> of rollback.</div>
+        </div>
+        <div class="hint">Rolling back the DB is the tempting move — and it would not have fixed anything.</div>
+      </div>
+    </div>
+
+    <div class="split" style="margin-top:12px">
+      <div class="gwrap">
+        <h3 style="font-size:10.5px;letter-spacing:.16em;color:#5f7a9c;font-weight:700;margin-bottom:12px">CAUSAL CHAIN</h3>
+        <div class="chain">
+          <div class="lnk first"><div class="dotcol"><div class="dot"></div><div class="stem"></div></div><div class="body"><div class="lt">Deployment D104</div><div class="ld">10:01:10 · checkout v1.8.1 → v1.8.2</div></div></div>
+          <div class="gap">+7 s</div>
+          <div class="lnk"><div class="dotcol"><div class="dot"></div><div class="stem"></div></div><div class="body"><div class="lt">Checkout p95 latency spike</div><div class="ld">10:01:17 · 210 ms → 1.8 s</div></div></div>
+          <div class="gap">+7 s</div>
+          <div class="lnk"><div class="dotcol"><div class="dot"></div><div class="stem"></div></div><div class="body"><div class="lt">Payment service timeout</div><div class="ld">10:01:24 · 0.4% → 6.0%</div></div></div>
+          <div class="gap">+7 s</div>
+          <div class="lnk"><div class="dotcol"><div class="dot"></div><div class="stem"></div></div><div class="body"><div class="lt">Orders DB connection pressure</div><div class="ld">10:01:31 · pool util 85%</div></div></div>
+          <div class="gap">+4 s</div>
+          <div class="lnk"><div class="dotcol"><div class="dot"></div></div><div class="body"><div class="lt">HTTP 500 errors user-visible</div><div class="ld">10:01:35 · 0.1% → 4.2%</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="gwrap">
+          <h3 style="font-size:10.5px;letter-spacing:.16em;color:#5f7a9c;font-weight:700;margin-bottom:10px">SUPPORTING EVIDENCE · 5 OF 5 SYMPTOMS EXPLAINED</h3>
+          <div class="evlist" id="evsup"></div>
+        </div>
+        <div class="gwrap" style="margin-top:12px">
+          <h3 style="font-size:10.5px;letter-spacing:.16em;color:#fca5a5;font-weight:700;margin-bottom:10px">MISLEADING SIGNAL</h3>
+          <div class="evlist" id="evmis"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gwrap" style="margin-top:12px">
+      <h3 style="font-size:10.5px;letter-spacing:.16em;color:#5f7a9c;font-weight:700;margin-bottom:10px">COUNTERFACTUAL CHECK</h3>
+      <div class="cf">“Remove Deployment D104 — no alternative candidate explains the initial Checkout p95 latency deviation at 10:01:17 within the incident window. H2 and H3 both fail the temporal-precedence and topology tests.”</div>
+    </div>
+
+    <div class="tlwrap">
+      <div class="th"><h3>INCIDENT TIMELINE · RECONSTRUCTED</h3><span>7 rows · onset 10:01:17</span></div>
+      <div class="tl" id="tl4"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>PYGENIC ARC · ANVATION 2026 · Problem AI-03 · Team ZENITH (ANV26-AI-38)</span>
+    <span>Seed INC-1042 · deterministic replay · 9-stage engine</span>
+  </footer>
+</main>
+
+<div class="drawer" id="drawer">
+  <div class="dh"><b id="dId">EVT-…</b><button id="dClose">×</button></div>
+  <div class="meta" id="dMeta"></div>
+  <pre id="dRaw"></pre>
+</div>
+
+<script>
+/* ============================================================
+   PYGENIC ARC — MVP · single file · offline · deterministic
+   Seed: INC-1042   (canonical values only — never invent numbers)
+   ============================================================ */
+/* ============================================================
+   PYGENIC ARC — MVP runtime
+   Seed INC-1042 · deterministic · offline · no dependencies
+   Every number below is copied from PYGENIC_ARC_FOCUSED_SPEC.md
+   ============================================================ */
+
+/* ---------- canonical seed (spec §1, §8) ---------- */
+const SEED = {
+  incident: "INC-1042",
+  title: "Checkout degradation",
+  primary: "Checkout",
+  deploy: "D104",
+  downstream: "Payment",
+  database: "Orders DB",
+  firstAnomaly: "10:01:17",
+  redHerringAt: "10:01:38",
+  scores: { h1: 87, h3: 41, h2: 23 },
+  action: "Roll back Deployment D104.",
+  verify: "Checkout p95 < 350 ms within 90 s",
+  counters: { raw: 482, canonical: 213, anomalies: 17, candidates: 3 }
+};
+
+/* ---------- timeline, 6 markers (spec §1.2) ---------- */
+const TIMELINE = [
+  { t: "10:01:10", cls: "change", main: "Deployment D104", sub: "checkout v1.8.1 → v1.8.2", tag: "CHANGE" },
+  { t: "10:01:13", cls: "base",   main: "Checkout p95 baseline", sub: "210 ms", tag: "BASELINE" },
+  { t: "10:01:17", cls: "first",  main: "Checkout p95 jumps", sub: "210 ms → 1.8 s", tag: "ANOMALY · FIRST" },
+  { t: "10:01:24", cls: "",       main: "Payment timeout rate", sub: "0.4% → 6.0%", tag: "ANOMALY" },
+  { t: "10:01:31", cls: "",       main: "Orders DB connection-pool pressure", sub: "utilisation 85%", tag: "ANOMALY · DOWNSTREAM" },
+  { t: "10:01:35", cls: "",       main: "HTTP 500 errors", sub: "0.1% → 4.2%", tag: "ANOMALY · SYMPTOM" },
+  { t: "10:01:38", cls: "rh",     main: "Orders DB query timeouts", sub: "12 / s", tag: "RED HERRING" }
+];
+
+/* ---------- investigation event stream (spec §4, 9 stages) ---------- */
+const STREAM = [
+  { at: "10:01:10", g: "INGEST",     m: "482 raw events ingested from 5 sources" },
+  { at: "10:01:11", g: "NORMALIZE",  m: "213 canonical events after dedup" },
+  { at: "10:01:12", g: "BASELINE",   m: "Checkout · Payment · Orders DB baselines set" },
+  { at: "10:01:13", g: "ANOMALY",    m: "first deviation: Checkout p95 +4.7 σ" },
+  { at: "10:01:14", g: "GRAPH",      m: "3 nodes · 4 edges mapped" },
+  { at: "10:01:15", g: "HYPOTHESIZE",m: "3 candidates: D104 · Orders DB · traffic spike" },
+  { at: "10:01:16", g: "TEST",       m: "scoring 8 terms × 3 candidates" },
+  { at: "10:01:16", g: "RED_HERRING",m: "EVT-A05-db-timeout classified DOWNSTREAM" },
+  { at: "10:01:17", g: "RCA",        m: "Deployment D104 → Checkout · confidence 0.87", bad: false }
+];
+
+/* ---------- evidence ledger (spec §1.5) ---------- */
+const EVIDENCE = {
+  "EVT-D104-deploy": {
+    meta: "deployment · 10:01:10 · checkout",
+    raw: `{
+  "type": "deployment",
+  "change_id": "D104",
+  "service": "checkout",
+  "version_from": "1.8.1",
+  "version_to":   "1.8.2",
+  "at": "10:01:10",
+  "relation": "PRECEDES first anomaly by 7 s"
+}`
+  },
+  "EVT-A01-checkout-lat": {
+    meta: "metric · 10:01:17 · checkout p95 latency",
+    raw: `{
+  "type": "metric",
+  "service": "checkout",
+  "metric": "http_p95_latency_ms",
+  "baseline": 210,
+  "observed": 1800,
+  "z_score": 4.7,
+  "at": "10:01:17"
+}`
+  },
+  "EVT-A02-payment-to": {
+    meta: "metric · 10:01:24 · payment timeout rate",
+    raw: `{
+  "type": "metric",
+  "service": "payment",
+  "metric": "timeout_rate",
+  "baseline": 0.004,
+  "observed": 0.060,
+  "at": "10:01:24",
+  "relation": "DOWNSTREAM of checkout"
+}`
+  },
+  "EVT-A03-db-pressure": {
+    meta: "metric · 10:01:31 · orders DB pool",
+    raw: `{
+  "type": "metric",
+  "service": "orders-db",
+  "metric": "connection_pool_utilisation",
+  "observed": 0.85,
+  "at": "10:01:31",
+  "relation": "DOWNSTREAM of checkout"
+}`
+  },
+  "EVT-A04-http-500": {
+    meta: "metric · 10:01:35 · checkout 5xx rate",
+    raw: `{
+  "type": "metric",
+  "service": "checkout",
+  "metric": "http_5xx_rate",
+  "baseline": 0.001,
+  "observed": 0.042,
+  "at": "10:01:35",
+  "relation": "USER-VISIBLE SYMPTOM"
+}`
+  },
+  "EVT-A05-db-timeout": {
+    meta: "metric · 10:01:38 · RED HERRING · downstream effect",
+    raw: `{
+  "type": "metric",
+  "service": "orders-db",
+  "metric": "query_timeouts_per_sec",
+  "observed": 12,
+  "magnitude": 0.96,
+  "at": "10:01:38",
+  "delta_from_onset_seconds": 21,
+  "topology_position": "downstream",
+  "classification": "RED_HERRING / DOWNSTREAM_EFFECT",
+  "not_root_cause_because": "starts 21 s after the first anomaly"
+}`
+  },
+  "EVT-L01-checkout-log": {
+    meta: "log · 10:01:18 · checkout-api",
+    raw: `10:01:18  ERROR  checkout-api  pool wait 1204ms
+10:01:18  ERROR  checkout-api  request /cart/checkout aborted 1204ms`
+  },
+  "EVT-L02-payment-log": {
+    meta: "log · 10:01:24 · payment-svc",
+    raw: `10:01:24  WARN   payment-svc   upstream timeout after 3000ms
+10:01:24  WARN   payment-svc   retry 1/3 to orders-db`
+  },
+  "EVT-T01-trace-abc123": {
+    meta: "trace · 10:01:18 → 10:01:36 · 3 spans",
+    raw: `trace_id: abc123
+  span 1  checkout-api   1800 ms   (baseline 210 ms)
+  span 2  payment-svc    3020 ms   (downstream of checkout)
+  span 3  orders-db       890 ms   (leaf, downstream)
+propagation: checkout-api → payment-svc → orders-db`
+  }
+};
+
+const SUPPORTING = [
+  ["EVT-D104-deploy",       "Precedes first anomaly by 7 s (10:01:10 → 10:01:17)"],
+  ["EVT-A01-checkout-lat",  "First deviation: p95 210 ms → 1.8 s (+4.7 σ)"],
+  ["EVT-A02-payment-to",    "Explains Payment timeout (0.4% → 6.0%)"],
+  ["EVT-A03-db-pressure",   "Explains Orders DB pool pressure (util 85%)"],
+  ["EVT-A04-http-500",      "Explains user-visible 5xx (0.1% → 4.2%)"],
+  ["EVT-T01-trace-abc123",  "Propagation matches Checkout → Payment → Orders DB"],
+  ["EVT-L01-checkout-log",  "Checkout pool wait 1204 ms at 10:01:18"],
+  ["EVT-L02-payment-log",   "Payment upstream timeout at 10:01:24"]
+];
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+function renderTimeline(el, opts = {}) {
+  if (!el) return;
+  el.innerHTML = "";
+  TIMELINE.forEach((m, i) => {
+    if (opts.hideRH && m.cls === "rh") return;
+    const d = document.createElement("div");
+    d.className = "tli " + m.cls;
+    d.style.animationDelay = (opts.delay ? i * 90 : 0) + "ms";
+    d.innerHTML =
+      `<span class="tt">${m.t}</span><span class="mk"></span>` +
+      `<span class="txt"><b>${m.main}</b> <em>${m.sub}</em>` +
+      (m.cls === "rh" ? ` <span class="tag b-red">${m.tag}</span>` :
+       m.cls === "first" ? ` <span class="tag b-amber">${m.tag}</span>` :
+       m.cls === "change" ? ` <span class="tag b-amber">${m.tag}</span>` : "") +
+      `</span>`;
+    el.appendChild(d);
+  });
+}
+
+function renderEvidence() {
+  const sup = $("#evsup");
+  if (sup) {
+    sup.innerHTML = "";
+    SUPPORTING.forEach(([id, txt]) => {
+      const b = document.createElement("button");
+      b.className = "ev";
+      b.dataset.ev = id;
+      b.innerHTML = `<span class="id">${id}</span><span class="tx">${txt}</span>`;
+      sup.appendChild(b);
+    });
+  }
+  const mis = $("#evmis");
+  if (mis) {
+    const b = document.createElement("button");
+    b.className = "ev mis";
+    b.dataset.ev = "EVT-A05-db-timeout";
+    b.innerHTML = `<span class="id">EVT-A05-db-timeout</span><span class="tx">10:01:38 — downstream effect, not the initiator</span>`;
+    mis.appendChild(b);
+  }
+}
+
+/* ---------- evidence drawer ---------- */
+function openDrawer(id) {
+  const e = EVIDENCE[id];
+  if (!e) return;
+  $("#dId").textContent = id;
+  $("#dMeta").textContent = e.meta;
+  $("#dRaw").textContent = e.raw;
+  $("#drawer").classList.add("on");
+}
+document.addEventListener("click", (ev) => {
+  const hit = ev.target.closest("[data-ev]");
+  if (hit) openDrawer(hit.dataset.ev);
+});
+$("#dClose").addEventListener("click", () => $("#drawer").classList.remove("on"));
+
+/* ---------- screen switching ---------- */
+function goto(n) {
+  $$(".screen").forEach(s => s.classList.toggle("active", s.dataset.screen === String(n)));
+  $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.go === String(n)));
+  const d = $("#drawer"); if (d) d.classList.remove("on");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+$$(".tab").forEach(t => t.addEventListener("click", () => goto(t.dataset.go)));
+
+/* ---------- pipeline animation ---------- */
+const STAGE_NAMES = ["INGEST", "NORMALIZE", "BASELINE", "DETECT", "MAP"];
+let timers = [];
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+function resetAll() {
+  clearTimers();
+  $("#invState").className = "statechip";
+  $("#invState").textContent = "IDLE";
+  $("#b2").className = "badge b-gray";
+  $("#b2").textContent = "not started";
+  $$("#rail .stage").forEach(s => { s.classList.remove("run", "ok"); $(".st", s).textContent = "pending"; });
+  ["v1", "v2", "v3", "v4"].forEach(id => $("#" + id).textContent = "0");
+  ["c1", "c2", "c3", "c4"].forEach(id => $("#" + id).classList.remove("hit"));
+  $("#trace").innerHTML = `<div style="opacity:1"><span class="tt">--:--:--</span><span class="tm" style="color:#5f7a9c">awaiting pipeline run… press ▶ DEMO / REPLAY</span></div>`;
+  $("#nodes").setAttribute("opacity", "0");
+  $("#edges").setAttribute("opacity", "0");
+  ["h1", "h2", "h3"].forEach(id => {
+    $("#" + id).classList.remove("win", "lose");
+    $("#p" + id[1]).style.width = "0%";
+    $("#s" + id[1]).textContent = "0%";
+  });
+  $("#t1").style.display = "none";
+  $("#t2").style.display = "none";
+  renderTimeline($("#tl1"), { delay: true });
+  renderTimeline($("#tl3"));
+  renderTimeline($("#tl4"));
+}
+
+function addTrace(at, g, m, bad) {
+  const box = $("#trace");
+  const d = document.createElement("div");
+  d.innerHTML = `<span class="tt">${at}</span><span class="tg">${g}</span><span class="tm ${bad ? "bad" : ""}">${m}</span>`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setStage(i, state) {
+  const el = $$("#rail .stage")[i];
+  if (!el) return;
+  el.classList.remove("run", "ok");
+  if (state) el.classList.add(state);
+  $(".st", el).textContent = state === "ok" ? "done" : state === "run" ? "running" : "pending";
+}
+
+function setCounter(box, val, id) {
+  $("#" + val).textContent = id === "v1" || id === "v2" || id === "v3" || id === "v4" ? id.slice(1) : "";
+}
+
+function animateCount(el, to, ms) {
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min(1, (now - start) / ms);
+    $("#" + el).textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function setScore(n, val) {
+  $("#s" + n).textContent = val + "%";
+  $("#p" + n).style.width = val + "%";
+}
+
+/* the single real investigation run */
+function runInvestigation(instant) {
+  resetAll();
+  const sp = parseFloat($("#speed").value) || 1;
+  const K = instant ? 0.0001 : 1 / sp;
+
+  $("#invState").className = "statechip on";
+  $("#invState").textContent = "ACTIVE";
+  $("#b2").className = "badge b-blue";
+  $("#b2").textContent = "running";
+
+  /* --- screen 2 stages --- */
+  STAGE_NAMES.forEach((nm, i) => {
+    later(() => {
+      setStage(i, "run");
+      addTrace("10:01:1" + i, nm, STREAM[i].m, false);
+    }, 260 * K + i * 700 * K);
+    later(() => setStage(i, "ok"), 260 * K + i * 700 * K + 620 * K);
+  });
+
+  later(() => { $("#c1").classList.add("hit"); animateCount("v1", SEED.counters.raw, instant ? 1 : 500); }, 300 * K);
+  later(() => { $("#c2").classList.add("hit"); animateCount("v2", SEED.counters.canonical, instant ? 1 : 620); }, 950 * K);
+  later(() => { $("#c3").classList.add("hit"); animateCount("v3", SEED.counters.anomalies, instant ? 1 : 620); }, 1650 * K);
+  later(() => { $("#c4").classList.add("hit"); animateCount("v4", SEED.counters.candidates, instant ? 1 : 520); }, 2350 * K);
+
+  later(() => { $("#edges").setAttribute("opacity", "1"); }, 2900 * K);
+  later(() => { $("#nodes").setAttribute("opacity", "1"); }, 3150 * K);
+
+  /* --- stages 6-9 in the trace --- */
+  later(() => addTrace(STREAM[5].at, STREAM[5].g, STREAM[5].m), 3450 * K);
+  later(() => addTrace(STREAM[6].at, STREAM[6].g, STREAM[6].m), 3650 * K);
+  later(() => addTrace(STREAM[7].at, STREAM[7].g, STREAM[7].m, true), 3900 * K);
+  later(() => addTrace(STREAM[8].at, STREAM[8].g, STREAM[8].m), 4150 * K);
+
+  /* --- screen 3: hypotheses compete --- */
+  later(() => { setStage(4, "ok"); goto(3); }, 4300 * K);
+  later(() => { setScore(1, 46); setScore(3, 38); }, 4800 * K);
+  later(() => { setScore(1, 71); setScore(3, 41); setScore(2, 62); }, 5500 * K);
+  later(() => { setScore(2, 23); $("#h2").classList.add("lose"); $("#t2").style.display = ""; }, 6200 * K);
+  later(() => { setScore(1, 87); $("#h1").classList.add("win"); $("#t1").style.display = ""; }, 6800 * K);
+
+  /* --- screen 4: resolved --- */
+  later(() => {
+    $("#invState").className = "statechip done";
+    $("#invState").textContent = "RESOLVED";
+    $("#b2").className = "badge b-green";
+    $("#b2").textContent = "complete";
+    goto(4);
+  }, 7400 * K);
+}
+
+/* ---------- wiring ---------- */
+$("#replay").addEventListener("click", () => {
+  goto(1);
+  renderTimeline($("#tl1"));
+  later(() => runInvestigation(false), 320);
+});
+renderEvidence();
+resetAll();
+
+/* screenshot / deep-link support: ?screen=2 renders that screen in its end state */
+const qs = new URLSearchParams(location.search);
+const _f = window.FORCE_SCREEN || 0;
+const want = _f || parseInt(qs.get("screen") || location.hash.replace("#", ""), 10);
+if (want >= 2 && want <= 4) {
+  runInvestigation(true);
+  clearTimers();
+  STAGE_NAMES.forEach((_, i) => setStage(i, "ok"));
+  $("#invState").className = "statechip done";
+  $("#invState").textContent = "RESOLVED";
+  $("#b2").className = "badge b-green";
+  $("#b2").textContent = "complete";
+  STREAM.forEach(s => addTrace(s.at, s.g, s.m, s.g === "RED_HERRING"));
+  $("#v1").textContent = SEED.counters.raw;
+  $("#v2").textContent = SEED.counters.canonical;
+  $("#v3").textContent = SEED.counters.anomalies;
+  $("#v4").textContent = SEED.counters.candidates;
+  ["c1", "c2", "c3", "c4"].forEach(id => $("#" + id).classList.add("hit"));
+  $("#edges").setAttribute("opacity", "1");
+  $("#nodes").setAttribute("opacity", "1");
+  setScore(1, 87); setScore(3, 41); setScore(2, 23);
+  $("#h1").classList.add("win"); $("#h2").classList.add("lose");
+  $("#t1").style.display = ""; $("#t2").style.display = "";
+  goto(want);
+}
+
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920" integrity="sha512-L0ha0OXavK/8okipN9F8BtP84dg9DUhPERbBXzwI6dgTA55d2+yweo3pn5CSFYs45/r8md2+xvUPtTdvTNRfjA==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
