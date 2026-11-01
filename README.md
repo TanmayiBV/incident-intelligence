@@ -4,11 +4,6 @@
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-pygenic--arc.vercel.app-0070f3?style=for-the-badge)](https://pygenic-arc.vercel.app)
 [![Backend API](https://img.shields.io/badge/📡_API_Docs-Swagger_UI-85ea2d?style=for-the-badge)](https://pygenic-arc.vercel.app/api/docs)
-[![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178c6?style=flat-square&logo=typescript)](https://typescriptlang.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.143-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4.3-06b6d4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
-[![Deployed on Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=flat-square&logo=vercel)](https://pygenic-arc.vercel.app)
 
 > Built for **Anvation 2026** Hackathon · Problem **AI-03** · Team **ZENITH**
 
@@ -125,23 +120,24 @@ The system doesn't just find anomalies — it **ranks competing hypotheses**, **
 
 ## 🔄 How It Works — Step by Step
 
-```mermaid
-flowchart TD
-    A["📥 Raw Evidence<br/>Logs · Metrics · Traces · Changes"] --> B["🔄 Ingest & Normalize<br/>482 events → 213 canonical"]
-    B --> C["📏 Establish Baseline<br/>Rolling median for all services"]
-    C --> D["🔍 Detect Anomalies<br/>Z-score deviations from baseline"]
-    D --> E["🗺️ Map Dependencies<br/>Service topology graph"]
-    E --> F["🔗 Build Event Graph<br/>Trace causal propagation"]
-    F --> G["💡 Generate Hypotheses<br/>4 candidate root causes"]
-    G --> H["⚖️ Score Hypotheses<br/>5 weighted causal signals"]
-    H --> I["🚫 Reject Red Herrings<br/>Apply rejection rules R1–R5"]
-    I --> J["✅ Emit RCA<br/>Root cause + confidence + actions"]
-    J --> K["🔮 Counterfactual Validation<br/>Remove event → check symptoms"]
-
-    style A fill:#f0f9ff,stroke:#3b82f6,color:#1e3a5f
-    style J fill:#f0fdf4,stroke:#22c55e,color:#14532d
-    style K fill:#faf5ff,stroke:#a855f7,color:#3b0764
-    style I fill:#fef2f2,stroke:#ef4444,color:#7f1d1d
+```
+  ┌──────────┐    ┌───────────┐    ┌──────────┐    ┌────────┐    ┌─────┐
+  │  INGEST  │───▶│ NORMALIZE │───▶│ BASELINE │───▶│ DETECT │───▶│ MAP │
+  │ 482 raw  │    │ 213 canon │    │ 8 svc    │    │ 6 anom │    │ 8+7 │
+  └──────────┘    └───────────┘    └──────────┘    └────────┘    └──┬──┘
+                                                                    │
+  ┌──────────┐    ┌────────┐    ┌──────────────┐    ┌───────────┐   │
+  │   RCA    │◀───│ REJECT │◀───│     TEST     │◀───│HYPOTHESIZE│◀──┘
+  │ conf 87% │    │ R1–R5  │    │ 5 signals ea │    │ 4 cands   │
+  └────┬─────┘    └────────┘    └──────────────┘    └───────────┘
+       │
+       ▼
+  ┌──────────────────┐
+  │  COUNTERFACTUAL   │
+  │  VALIDATION       │
+  │  Remove event →   │
+  │  check symptoms   │
+  └──────────────────┘
 ```
 
 ### Scoring Methods

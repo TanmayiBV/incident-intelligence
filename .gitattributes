@@ -1,0 +1,4 @@
+# Override GitHub language detection
+# Show Python as primary language (FastAPI backend)
+*.ts linguist-detectable=false
+*.tsx linguist-detectable=false
